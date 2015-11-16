@@ -75,7 +75,7 @@ def remstwords(str):
     t_str = copy.deepcopy(str)
     for w in t_str:
         word_lm = lemmatizer.lemmatize(w[0].lower())
-        if word_lm in STOPWORDS:
+        if word_lm in STOPWORDS or string.punctuation:
             str.remove(w)
     return str
 
@@ -334,6 +334,7 @@ for file in files:
                 s = sent_list[0]
         # Tie rule
         # list1 contains the sentences with scores
+        s = remstwords(s)
         s1 = s.strip()
         s2 = s1.replace("\n"," ")
         value = qid_list[z] + "Answer: " + s2 + "\n\n"
