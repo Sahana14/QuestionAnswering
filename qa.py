@@ -8,9 +8,9 @@ import copy
 import numpy
 nltk.data.path.append("/home/sandeep/nltk_data")
 from nltk.corpus import state_union
-#java_path = "C:/Program Files/Java/jdk1.8.0_60/bin/java.exe"
-#os.environ['JAVAHOME'] = java_path
-#nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
+java_path = "C:/Program Files/Java/jdk1.8.0_60/bin/java.exe"
+os.environ['JAVAHOME'] = java_path
+nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
 from nltk.corpus import stopwords
 from nltk.tag.stanford import StanfordNERTagger
 st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
@@ -381,11 +381,11 @@ for file in files:
                         matched_ans.append(tree.leaves()[0][0])
         s2_list = s2.split()
         if Whword == "when":
-            ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
+            ner_tag = st.tag(s2_list)
             matched_ans = []
-            for tree in ner_tag.subtrees():
-                if tree.label().lower() == "date" or tree.label().lower() == "time":
-                    matched_ans.append(tree.leaves()[0][0])
+            for tree in ner_tag:
+                if tree[1].lower() == "date" or tree[1].lower() == "time":
+                    matched_ans.append(tree[0])
             if matched_ans == []:
                 for word in s2_list:
                     if word in TIME1 or word in year_list:
