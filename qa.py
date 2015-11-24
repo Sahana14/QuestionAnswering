@@ -6,6 +6,8 @@ import re
 import textwrap
 import copy
 import numpy
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.corpus import wordnet
 nltk.data.path.append("/home/sandeep/nltk_data")
 from nltk.corpus import state_union
 java_path = "C:/Program Files/Java/jdk1.8.0_60/bin/java.exe"
@@ -21,11 +23,8 @@ STOPWORDS = [lemmatizer.lemmatize(t) for t in stopwords.words('english')]
 quoted = re.compile('"([^"]*)"')
 #with open(sys.argv[1], 'r') as f:
    # contents = f.readlines()
-ques_words  = ["where", "when", "what", "how", "why", "who", "whose", "which"]
-ans_type = {"where":"location", "who":"person", "what":"organization", "how jj":"numeric", "when":"date time numeric",
-            "why":"description", "how mod":"description", "whose":"person",
-            "which":"location", "how long": "numeric", "how far": "numeric", "how much": "numeric",
-            "how old": "numeric", "how often": "numeric"} #"what np":"entity"
+ques_words  = ["where", "when", "what", "how", "why", "who", "whose", "which","whom"]
+ans_type = {"where":"location", "who":"person", "what":"organization","how jj":"numeric", "when":"date time numeric","why":"description", "how mod":"description", "whose":"person","which":"location", "how long": "numeric", "how far": "numeric", "how much": "numeric","how old": "numeric", "how often": "numeric", "how big": "numeric", "how tall": "numeric"} #"what np":"entity"
 
 MONTH = [ "january", "february", "march", "april", "may", "june", "july", "august",
           "september", "october", "november", "december"]
@@ -106,12 +105,52 @@ def WordMatch(ques, sent):
                     s_lm = ps.stem(s.lower())
                     if w == s_lm:
                         score = score + 6
+                        break
+                    w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s, 'v')
+                    if w1 == w2:
+                        score = score + 6
+                        break
             else:
                 w = ps.stem(q[0].lower())
                 for s in sent.split():
                     s_lm = ps.stem(s.lower())
                     if w == s_lm:
                         score = score + 3
+                        break
+    return score
+
+def WordMatchHow(ques, sent):
+    score = 0
+    ques_tag = PosTag(ques)
+    print(ques_tag)
+    sent_tag = PosTag(sent)
+    if containsNER(ques,"PERSON") or containsList(ques, PERSON_NAMES):
+        for se in sent_tag:
+            if se[1] == "PRP":
+                score = score + 3
+                break
+    for q in ques_tag:
+        if not checkStopWord(q[0]):
+            if q[1] == "VB" or q[1] == "VBD" or q[1] == "VBG" or q[1] == "VBN" or q[1] == "VBP" or q[1] == "VBZ":
+                w = ps.stem(q[0].lower())
+                for s in sent.split():
+                    s_lm = ps.stem(s.lower())
+                    if w == s_lm:
+                        score = score + 6
+                        break
+                    w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s, 'v')
+                    if w1 == w2:
+                        score = score + 6
+                        break
+            else:
+                w = ps.stem(q[0].lower())
+                for s in sent_tag:
+                    s_lm = ps.stem(s[0].lower())
+                    if w == s_lm:
+                        score = score + 3
+                        break
     return score
 
 def containsNER(q,category):
@@ -209,9 +248,9 @@ def whereRule(q,s):
 def whyRule(q,s, best, prev_sent, next_sent):
     score = 0
     for b_sent in best:
-        if s == b_sent:#doubt if in works
+        if s == b_sent:
             score = score + good_clue
-        if  next_sent == b_sent:
+        if next_sent == b_sent:
             score = score + clue
         if prev_sent == b_sent:
             score = score + clue
@@ -242,13 +281,232 @@ def convertSenttolist(s):
 def findWH(sent):
     for word in reversed(sent.split()):
         if ques_words.__contains__(word.lower()):
-            return word.lower()
+            return word
+
+def whyMainRule(q,sent_list):
+    score = []
+    best = []
+    temp_list = []
+    for k,s in enumerate(sent_list):
+        score.append(WordMatch(q,s))
+        best.append((s, score[k]))
+    best_list = sorted(best, key=lambda  x: (-x[1],x[0]))
+    sent_best = []
+    for j in range(10):
+        sent_best.append(best_list[j][0])
+    for i,s in enumerate(sent_list):
+        if i == 0:
+            score = whyRule(q,s,sent_best,None,sent_list[i+1])
+        elif  i == len(sent_list) - 1:
+            score = whyRule(q,s,sent_best,sent_list[i-1],None)
+        else:
+            score = whyRule(q,s,sent_best,sent_list[i-1],sent_list[i+1])
+        temp_list.append((s,score))
+    return temp_list
+
+def Postagger(sent):
+    sent_tag = nltk.pos_tag(nltk.word_tokenize(sent))
+    return sent_tag
+
+def findNNP(sent_tagged):
+    #i = [x for x in sent_tagged if x[1] == "NNP" or x[1] == "NNPS"]
+    nnp = []
+    flag = 0
+    s = None
+    for x in sent_tagged:
+        if x[1] == "NNP" and flag == 0:
+            s = x[0]
+            flag = 1
+        elif x[1] == "NNP" and flag == 1:
+            s = s + " " + x[0]
+        else:
+            if s != None:
+                nnp.append(s)
+            s = None
+            flag = 0
+    if sent_tagged[-1][1] == "NNP":
+        nnp.append(s)
+    #for x in i:
+        #sent_tagged.remove(x)
+    return nnp
+
+def removestopwords_punct(ques):
+    t_ques = copy.deepcopy(ques)
+    for w in t_ques:
+        word_lm = lemmatizer.lemmatize(w[0].lower())
+        if word_lm in STOPWORDS or word_lm in string.punctuation:
+            ques.remove(w)
+    return ques
+
+def findcomplNominal(tag_sent):
+
+    nom = []
+    for i,(x,t) in enumerate(tag_sent):
+        if tag_sent[i][1] == 'NN' and tag_sent[i-1][1] == 'JJ':
+            nom.append(tag_sent[i-1][0] + " " + tag_sent[i][0])
+            tag_sent.remove(tag_sent[i-1])
+            tag_sent.remove((x,t))
+    return nom
+
+def findotherNominal(tag_sent):
+    nom = []
+    for i,(x,t) in enumerate(tag_sent):
+        if tag_sent[i][1] == 'NN' and tag_sent[i-1][1] == 'NN':
+            nom.append(tag_sent[i-1][0] + " " + tag_sent[i][0])
+            tag_sent.remove(tag_sent[i-1])
+            tag_sent.remove((x,t))
+    return nom
+
+def findnounAdj(tag_sent):
+    na = []
+    i = [tag_sent.index(x) for x in tag_sent if x[1] == "JJ"]
+    for z in i:
+        noun = [y[0] for y in tag_sent if tag_sent.index(y) > z and y[1] == "NN" or y[1] == "NNS"]
+        na.append(tag_sent[z][0] + " " + ' '.join(map(str, noun)))
+    return na
+
+def findallNoun(tag_sent):
+    i = [x[0] for x in tag_sent if x[1] == "NN" or x[1] == "NNS"]
+    return i
+
+def findallVerb(tag_sent):
+    i = [x[0] for x in tag_sent if x[1] == "VBZ" or x[1] == "VB" or x[1] == "VBD" or x[1] == "VBG" or x[1] == "VBN" or x[1] == "VBP"]
+    return i
+
+def findallAdverb(tag_sent):
+    i = [x[0] for x in tag_sent if x[1] == "RB" or x[1] == "RBR" or x[1] == "RBS"]
+    return i
+
+def countexp_nnp(para, nnp):
+    cnt = 0
+    for stxt in nnp:
+        if stxt in para:
+            cnt = cnt + 1
+            break
+        else:
+            for w in stxt.split():
+                if w in para:
+                    cnt = cnt + 1
+                    break
+    return cnt
+
+def countexp(para, searchText):
+    cnt = 0
+    for stxt in searchText:
+        if stxt.lower() in para.lower():
+            cnt = cnt + 1
+    return cnt
+
+def countexp_verb(para, searchText):
+    cnt = 0
+    searchWords = [lemmatizer.lemmatize(s) for s in searchText]
+    for stxt in searchWords:
+        if stxt.lower() in para.lower():
+            cnt = cnt + 1
+    return cnt
+
+def countexp_na(para, searchText):
+    cnt = 0
+    flag = 0
+    for stxt in searchText:
+        for sen in nltk.sent_tokenize(para):
+            for word in stxt.split():
+                if word in sen:
+                    flag = 1
+                else:
+                    flag = 0
+            if flag == 1:
+                cnt = cnt + 1
+                break
+    return cnt
+
+def formatFinalSent(Whword, s2):
+    matched_ans = []
+    if Whword.lower() == "who" or Whword.lower() == "where":
+        anstype = ans_type[Whword.lower()]
+        ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
+        for tree in ner_tag.subtrees():
+            if anstype == "location":
+                if tree.label().lower() == anstype or tree.label().lower() == "gpe":
+                    matched_ans.append(tree.leaves()[0][0])
+            else:
+                if tree.label().lower() == anstype:
+                    matched_ans.append(tree.leaves()[0][0])
+    s2_list = s2.split()
+    if Whword.lower() == "when":
+        ner_tag = st.tag(s2_list)
+        matched_ans = []
+        for tree in ner_tag:
+            if tree[1].lower() == "date" or tree[1].lower() == "time":
+                matched_ans.append(tree[0])
+        if matched_ans == []:
+            for word in s2_list:
+                if word in TIME1 or word in year_list:
+                    matched_ans.append(word)
+    if Whword.lower() == "how":
+        q_list = q.split()
+        for i,word in enumerate(q_list):
+            if word.lower() == "how":
+                if word.lower() + " " + q_list[i+1] in ans_type:
+                    s2_temp = s2
+                    for c in string.punctuation:
+                        s2= s2.replace(c," ")
+                    ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
+                    ner_tag_temp = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_temp)))
+                    matched_ans = []
+                    temp_list = []
+                    for tree in ner_tag.subtrees():
+                        if tree.label().lower() == "date" or tree.label().lower() == "time":
+                            temp_list.append(tree.leaves[0][0])
+                    for ind,y in enumerate(ner_tag.leaves()):
+                        if y[1] == "CD":
+                            if not y[0] in temp_list:
+                                matched_ans.append(ner_tag_temp.leaves()[ind][0])
+    if Whword.lower() == "what":
+        ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
+        matched_ans = []
+        for tree in ner_tag.subtrees():
+            if tree.label().lower() == "organization":
+                matched_ans.append(tree.leaves()[0][0])
+    return matched_ans
+
+def trimFinalAns(matched_ans, final_sent):
+    for a,words in enumerate(final_sent):
+        for ans in matched_ans:
+            new_ans_str = ""
+            if words == ans:
+                if a == 0:
+                    new_ans_str = new_ans_str + " " + words + " " + final_sent[a+1]
+                elif a == len(final_sent) - 1:
+                    new_ans_str = new_ans_str + " " + final_sent[a-1] + " " + words
+                else:
+                    new_ans_str = new_ans_str + " " + final_sent[a-1] + " " + words + " " + final_sent[a+1]
+                new_ans.append(new_ans_str)
+    return new_ans
+
+def removepunc(val):
+    if val.__contains__("-") or val.__contains__("."):
+        val = val.replace("."," ")
+        val = val.replace("-"," ")
+    return val
 
 os.chdir(sys.argv[1])
 o = open('../out.txt', 'w')
+countfile = open("countlist.txt", 'w')
+topfile = open("topsents.txt", 'w')
 files = sorted(glob.glob('*.questions'))
 cnt = 0
 for file in files:
+    fileId = file.title().split('.')[0]
+    quotations = []
+    ner_tag = []
+    nnp_words = []
+    complNominal = []
+    otherNominal = []
+    nounAdj = []
+    otherNoun = []
+    verb = []
+    adverb = []
     cnt = cnt + 1
     print(cnt)
     fileId = file.title().split('.')[0]
@@ -262,6 +520,28 @@ for file in files:
             if line.__contains__("Question:"):
                 ques = line.split("Question:")[1]
                 ques_list.append(ques)
+                Wh_word = findWH(ques)
+                #print Wh_word
+                q_tagged = Postagger(ques)
+                q_tagged_copy = copy.deepcopy(q_tagged)
+                #print "Answer Type: "
+                #findNominal(q_tagged)
+                #ner_tag.append(st.tag(ques[1].split()))
+                #print ner_tag
+                quot = []
+                for val in quoted.findall(ques[1]):
+                    if val:
+                        quot.append(val)
+                quotations.append(quot)
+                #print quotations
+                nnp_words.append(findNNP(q_tagged))
+                complNominal.append(findcomplNominal(q_tagged))
+                otherNominal.append(findotherNominal(q_tagged))
+                nounAdj.append(findnounAdj(q_tagged))
+                otherNoun.append(findallNoun(q_tagged))
+                removestopwords_punct(q_tagged)
+                verb.append(findallVerb(q_tagged))
+                adverb.append(findallAdverb(q_tagged))
     with open(fileId + '.story', 'r') as f:
         story_text = f.read()
         header = story_text.split("TEXT:")[0]
@@ -270,10 +550,19 @@ for file in files:
             dateline = header.split("DATE:")[1]
             date = dateline.split("\n")[0]
         #print date
-        sent_list = nltk.sent_tokenize(story_text.split("TEXT:")[1])
+        full_story = story_text.split("TEXT:")[1]
+        sent_list = nltk.sent_tokenize(full_story)
+        sent_list_copy = copy.deepcopy(sent_list)
+        sent_list = []
+        for sen in sent_list_copy:
+            sen = sen.replace(".", "")
+            sen = sen.replace("-", " ")
+            sen = sen.replace(",","")
+            sent_list.append(sen)
     for z,q in enumerate(ques_list):
+        count_list = []
         question_type = ""
-        for x in reversed(q.split()):
+        for l,x in enumerate(reversed(q.split())):
             if x.lower() == "who":
                 question_type="who"
                 break
@@ -288,6 +577,9 @@ for file in files:
                 break
             if x.lower() == "why":
                 question_type="why"
+                break
+            if x.lower() == "how" and "how " + q.split()[l-1].lower() not in ans_type:
+                question_type="how"
                 break
         list1 = []
         dateline_score = 0
@@ -310,23 +602,7 @@ for file in files:
                 score = whereRule(q,s)
                 list1.append((s,score))
         elif question_type=="why":
-            score = []
-            best = []
-            for k,s in enumerate(sent_list):
-                score.append(WordMatch(q,s))
-                best.append((s, score[k]))
-            best_list = sorted(best, key=lambda  x: (-x[1],x[0]))
-            sent_best = []
-            for j in range(10):
-                sent_best.append(best_list[j][0])
-            for i,s in enumerate(sent_list):
-                if i == 0:
-                    score = whyRule(q,s,sent_best,None,sent_list[i+1])
-                elif  i == len(sent_list) - 1:
-                    score = whyRule(q,s,sent_best,sent_list[i-1],None)
-                else:
-                    score = whyRule(q,s,sent_best,sent_list[i-1],sent_list[i+1])
-                list1.append((s,score))
+            list1 = whyMainRule(q,sent_list)
         else:
             for s in sent_list:
                 score = WordMatch(q,s)
@@ -363,83 +639,77 @@ for file in files:
             #new_str = new_str + word + " "
         s1 = s.strip()
         s2 = s1.replace("\n"," ")
-
-        #call our code on q
-        # first find the answer type
         new_ans = []
         Whword = findWH(q)
-        matched_ans = []
-        if Whword == "who" or Whword == "where":
-            anstype = ans_type[Whword]
-            ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
-            for tree in ner_tag.subtrees():
-                if anstype == "location":
-                    if tree.label().lower() == anstype or tree.label().lower() == "gpe":
-                        matched_ans.append(tree.leaves()[0][0])
-                else:
-                    if tree.label().lower() == anstype:
-                        matched_ans.append(tree.leaves()[0][0])
         s2_list = s2.split()
-        if Whword == "when":
-            ner_tag = st.tag(s2_list)
-            matched_ans = []
-            for tree in ner_tag:
-                if tree[1].lower() == "date" or tree[1].lower() == "time":
-                    matched_ans.append(tree[0])
-            if matched_ans == []:
-                for word in s2_list:
-                    if word in TIME1 or word in year_list:
-                        matched_ans.append(word)
-        if Whword == "how":
-            q_list = q.split()
-            for i,word in enumerate(q_list):
-                if word.lower() == "how":
-                    if word.lower() + " " + q_list[i+1] in ans_type:
-                        ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
-                        matched_ans = []
-                        temp_list = []
-                        for tree in ner_tag.subtrees():
-                            if tree.label().lower() == "date" or tree.label().lower() == "time":
-                                temp_list.append(tree.leaves[0][0])
-                        for y in ner_tag.leaves():
-                            if y[1] == "CD":
-                                if not y[0] in x:
-                                    matched_ans.append(y[0])
-        if Whword == "what":
-            ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2)))
-            matched_ans = []
-            for tree in ner_tag.subtrees():
-                if tree.label().lower() == "organization":
-                    matched_ans.append(tree.leaves()[0][0])
-        for a,words in enumerate(s2_list):
-            for ans in matched_ans:
-                new_ans_str = ""
-                if words == ans:
-                    if a == 0:
-                        new_ans_str = new_ans_str + " " + words + " " + s2_list[a+1]
-                    elif a == len(s2_list) - 1:
-                        new_ans_str = new_ans_str + " " + s2_list[a-1] + " " + words
-                    else:
-                        new_ans_str = new_ans_str + " " + s2_list[a-1] + " " + words + " " + s2_list[a+1]
-                    new_ans.append(new_ans_str)
         # Prcess the s1.
         # Put if loop of answertype so that it seasy to debug. Currently who and where.
         # Put ner on s2 for the answer type
         # print 5 words before and and after save the value on file.
+        sorted_ans_list = sorted(list1, key=lambda  x: (-x[1],x[0]))
+        paras = re.split("[\.|\"|!]\s*\n\n+", full_story)
+        topfile.write("\nQuestion: " + q)
+        top_sents_cnt = 0
+        for answ in sorted_ans_list:
+            if top_sents_cnt < 5:
+                top_sents_cnt = top_sents_cnt + 1
+                topfile.write(answ[0] + "   ")
+                topfile.write(str(answ[1]) + "\n")
+        top_ans = []
+        for para in paras:
+            para = para + "."
+            count = 0
+            count = count + countexp(para, quotations[z])
+            count = count + countexp_nnp(para, nnp_words[z])
+            count = count + countexp(para, complNominal[z])
+            count = count + countexp(para, otherNominal[z])
+            count = count + countexp_na(para, nounAdj[z])
+            count = count + countexp(para, otherNoun[z])
+            count = count + countexp_verb(para, verb[z])
+            count = count + countexp(para, adverb[z])
+            count_list.append(count)
+            top_cnt = 0
+            for answer in sorted_ans_list:
+                if top_cnt < 5:
+                    top_cnt = top_cnt + 1
+                    if para.__contains__(answer[0]) and count > 0:
+                        top_ans.append(answer)
+        countfile.write("\nQuestion: " + q)
+        countfile.write(str(count_list))
+        if not top_ans == []:
+            sorted_top_ans = sorted(top_ans, key=lambda  x: (-x[1],x[0]))
+            matched_ans = formatFinalSent(Whword,sorted_top_ans[0][0])
+            new_ans = trimFinalAns(matched_ans,sorted_top_ans[0][0].split())
+        else:
+            matched_ans = formatFinalSent(Whword, s2)
+            new_ans = trimFinalAns(matched_ans,s2.split())
         value = ""
         if len(new_ans) > 0:
-            value = qid_list[z] + "Answer:"
+            value_str = ""
             for ans in new_ans:
-                ans = " ".join("".join([" " if ch in string.punctuation else ch for ch in ans]).split())
-                value = value + " " +ans
-            value = value + "\n\n"
+                #ans = " ".join("".join([" " if ch in string.punctuation else ch for ch in ans]).split())
+                ans = ans.strip()
+                value_str = value_str + ans + " "
+            value = ""
+            value_str_list1 = value_str.split()
+            value_str = ""
+            value_str_list = sorted(set(value_str_list1),key=value_str_list1.index)
+            for val in value_str_list:
+                val = removepunc(val)
+                value_str  = value_str + str(val) + " "
+            value = qid_list[z] + "Answer: " + value_str + "\n\n"
         else:
-            s2 = " ".join("".join([" " if ch in string.punctuation else ch for ch in s2]).split())
-            value = qid_list[z] + "Answer: " + s2 + "\n\n"
+            #s2 = " ".join("".join([" " if ch in string.punctuation else ch for ch in s2]).split())
+            value_str = ""
+            for val in s2.split():
+                val = removepunc(val)
+                value_str  = value_str + str(val) + " "
+            value = qid_list[z] + "Answer: " + value_str + "\n\n"
         #value = " ".join("".join([" " if ch in string.punctuation else ch for ch in value]).split())
         #value = value.translate(None, string.punctuation)
         o.write(value)
-        sorted_list = sorted(list1, key=lambda  x: (-x[1],x[0]))
+topfile.close()
+countfile.close()
 o.close()
 
 '''def Postagger(sent):
