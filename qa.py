@@ -10,12 +10,12 @@ import constants
 import Rules
 import Keywordcount
 import helper
-import  FinalizeSent
+import FinalizeSent
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import wordnet
 #nltk.data.path.append("/home/sandeep/nltk_data")
 from nltk.corpus import state_union
-java_path = "C:/Program Files (x86)/Java/jre1.8.0_60/bin/java.exe"
+java_path = "C:/Program Files/Java/jdk1.8.0_20/bin/java.exe"
 os.environ['JAVAHOME'] = java_path
 nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
 from nltk.corpus import stopwords
@@ -105,7 +105,6 @@ for file in files:
         for sent1 in sent_list1:
             sent1 = sent1.replace(sent1[len(sent1)-1],"")
             sent_list.append(sent1)
-            print(sent_list)
         '''
         sent_list_with_para=[]
          para_list = re.split("[\.|\"|!]\s*\n\n+", full_story)
@@ -171,6 +170,8 @@ for file in files:
                 list1.append((s,score))
         elif question_type=="why":
             list1 = Rules.whyMainRule(q,sent_list)
+        elif question_type=="hownum":
+            list1 = Rules.howRule(q,sent_list)
         else:
             for s in sent_list:
                 s_nopunct = helper.remove_puncts(s)
@@ -248,7 +249,7 @@ for file in files:
             #para_str = helper.convertListtoSent(para_nopuncts)
             #para_str = para_str.replace("\n", " ")
             for answer in sorted_ans_list:
-                if top_cnt < 5:
+                if top_cnt < 3:
                     top_cnt = top_cnt + 1
                     if para.__contains__(answer[0]) and count > 0:
                         top_ans.append(answer)
@@ -257,6 +258,8 @@ for file in files:
         finalsents.write("\n")
         finalsents.write("Question: " + q)
         sorted_top_ans = sorted(top_ans, key=lambda  x: (-x[1]))
+        #if sorted_top_ans[0][1] > 10 and sorted_top_ans[1][1] < 10:
+            #sorted_top_ans =
         for answ in sorted_top_ans:
             finalsents.write("\n" + answ[0] + "   ")
             finalsents.write(str(answ[1]) + "\n")

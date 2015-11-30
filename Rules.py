@@ -250,3 +250,10 @@ def whyMainRule(q,sent_list):
             score = whyRule(q,s,sent_best,sent_list[i-1],sent_list[i+1])
         temp_list.append((s,score))
     return temp_list
+
+def howRule(q,s):
+    score = 0
+    score = score + WordMatch(q,s)
+    if containsList(s, constants.Numeric) or containsPOSTag(s,"CD") :
+        score = score + constants.good_clue
+    return score

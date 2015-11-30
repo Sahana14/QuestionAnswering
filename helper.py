@@ -94,13 +94,14 @@ def removezeroscore(sent):
             temp.append(s)
     return temp
 
-def findverbsinques(sent):
+def findverbsinques(Whword, sent):
     verb_list  = []
+    sent = sent.split(Whword)[1]
     sent_tag = Postagger(sent)
     sent_tag_nosw = removestopwords_punct(sent_tag)
     for sen in sent_tag_nosw:
         if sen[1] == "VB" or sen[1] == "VBD" or sen[1] == "VBG" or sen[1] == "VBN":
-            verb_list.append(sen[0])
+            return sen[0]
     return verb_list
 
 def remove_puncts(sen):

@@ -201,12 +201,12 @@ def getUnmatchedAns(Wh_word,q,sent):
         un_match_ans = findMatchingAns(q1,sent)
 
 def matchFinalAnsWhoWhere(q, top_ans_list):
+    Wh_word = helper.findWH(q)
     q_verb_stem = []
-    q_verb_list = helper.findverbsinques(q)
+    q_verb_list = helper.findverbsinques(Wh_word,q)
     final_ans_list = []
     verb_match_sent = []
     match_ans = []
-    Wh_word = helper.findWH(q)
     if not q_verb_list == []:
         for verb in q_verb_list:
             q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
@@ -302,7 +302,7 @@ def findnounsinsent(sent_tag):
 
 def matchFinalAnsWhat(q, top_ans_list):
     q_verb_stem = []
-    q_verb_list = helper.findverbsinques(q)
+    q_verb_list = helper.findverbsinques(helper.findWH(q),q)
     final_ans_list = []
     verb_match_sent = []
     match_ans = []
@@ -412,7 +412,7 @@ def matchFinalAnsWhat(q, top_ans_list):
 
 def matchFinalAnsWhenHow(q, top_ans_list):
     q_verb_stem = []
-    q_verb_list = helper.findverbsinques(q)
+    q_verb_list = helper.findverbsinques(helper.findWH(q),q)
     final_ans_list = []
     verb_match_sent = []
     match_ans = []
@@ -470,7 +470,7 @@ def matchFinalAnsWhenHow(q, top_ans_list):
 
 def matchFinalWhy(q, top_ans_list):
     q_verb_stem = []
-    q_verb_list = helper.findverbsinques(q)
+    q_verb_list = helper.findverbsinques(helper.findWH(q),q)
     final_ans_list = []
     verb_match_sent = []
     match_ans = []
