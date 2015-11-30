@@ -34,7 +34,7 @@ def formatFinalSent(Whword, s2, q):
                 loc = helper.findinList(s2, constants.LOCATION)
                 s2_li = s2.split()
                 for b,word in enumerate(s2_li):
-                    if word == "in":
+                    if word == "in" or word == "from":
                         loc.append(s2_li[b+1])
                         if b+2 <= len(s2_li) - 1:
                             loc.append(s2_li[b+2])
@@ -47,6 +47,14 @@ def formatFinalSent(Whword, s2, q):
                     s = [x[0] for x in tree.leaves()]
                     matched_ans = matched_ans + s
                 person = helper.findinList(s2, constants.OCCUPATION) + helper.findinList(s2, constants.PERSON_NAMES)
+                s2_li = s2.split()
+                for b,word in enumerate(s2_li):
+                    if word == "by":
+                        person.append(s2_li[b+1])
+                        if b+2 <= len(s2_li) - 1:
+                            person.append(s2_li[b+2])
+                        if b+3 <= len(s2_li) - 1:
+                            person.append(s2_li[b+3])
                 if not person == []:
                     matched_ans = matched_ans + person
         final_ans = matched_ans
@@ -183,12 +191,22 @@ def findMatchingAns(q,sent):
                         match_ans = match_ans + s
     return match_ans
 
+def getUnmatchedAns(Wh_word,q,sent):
+    un_match_ans=[]
+    if Wh_word == "who":
+        q1=q.lower().replace("who","where")
+        un_match_ans = findMatchingAns(q1,sent)
+    else:
+        q1=q.lower().replace("where","who")
+        un_match_ans = findMatchingAns(q1,sent)
+
 def matchFinalAnsWhoWhere(q, top_ans_list):
     q_verb_stem = []
     q_verb_list = helper.findverbsinques(q)
     final_ans_list = []
     verb_match_sent = []
     match_ans = []
+    Wh_word = helper.findWH(q)
     if not q_verb_list == []:
         for verb in q_verb_list:
             q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
@@ -204,12 +222,17 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
         if not verb_match_sent == []:
         #case a
             match_ans = findMatchingAns(q,verb_match_sent)  # verb + ner found in a sentence if match_ans not empty
+            un_match_ans=[]
+            un_match_ans=getUnmatchedAns(Wh_word,q,verb_match_sent[0][0])
             sent_tag = nltk.pos_tag(nltk.word_tokenize(verb_match_sent[0][0]))
             match_ans = match_ans + helper.findNNP(sent_tag)
+            list(set(match_ans) - set(un_match_ans))
             if match_ans == []:
                 #case b
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(verb_match_sent[0][0]))
                 match_ans = match_ans + helper.findNNP(sent_tag)
+                un_match_ans=getUnmatchedAns(Wh_word,q,verb_match_sent[0][0])
+                list(set(match_ans) - set(un_match_ans))
         else:
             match_ans = findMatchingAns(q,top_ans_list)
             # ner found in a sentence in the remaining of sentences where verb was not ptresent if match_ans not empty
@@ -217,10 +240,14 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
                 #case c
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(top_ans_list[0][0]))
                 match_ans = match_ans + helper.findNNP(sent_tag)
+                un_match_ans=getUnmatchedAns(Wh_word,q,top_ans_list[0][0])
+                list(set(match_ans) - set(un_match_ans))
             else:
             #case d
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(top_ans_list[0][0]))
                 match_ans = match_ans + helper.findNNP(sent_tag) # No ner found in a sentence. just return the top score verb sentence
+                un_match_ans=getUnmatchedAns(Wh_word,q,top_ans_list[0][0])
+                list(set(match_ans) - set(un_match_ans))
     else:
         match_ans1 = []
         sen = ""
@@ -238,6 +265,8 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
                         temp_list.append(top_ans)
                         match_ans1 = findMatchingAns(q,temp_list)
                         match_ans = match_ans + match_ans1 + helper.findNNP(sent_tag)
+                        un_match_ans=getUnmatchedAns(Wh_word,q,top_ans[0])
+                        list(set(match_ans) - set(un_match_ans))
                         flag = 1
         if flag ==0:
             for ans in top_ans_list:
@@ -247,6 +276,8 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
                 match_ans = match_ans + match_ans1
             sent_tag = nltk.pos_tag(nltk.word_tokenize(top_ans_list[0][0]))
             match_ans = match_ans + helper.findNNP(sent_tag)
+            un_match_ans=getUnmatchedAns(Wh_word,q,top_ans_list[0][0])
+            list(set(match_ans) - set(un_match_ans))
         '''for ans in top_ans_list:
             temp_list = []
             temp_list.append(ans)

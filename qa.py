@@ -13,9 +13,9 @@ import helper
 import  FinalizeSent
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import wordnet
-nltk.data.path.append("/home/sandeep/nltk_data")
+#nltk.data.path.append("/home/sandeep/nltk_data")
 from nltk.corpus import state_union
-java_path = "C:/Program Files/Java/jdk1.8.0_60/bin/java.exe"
+java_path = "C:/Program Files (x86)/Java/jre1.8.0_60/bin/java.exe"
 os.environ['JAVAHOME'] = java_path
 nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
 from nltk.corpus import stopwords
@@ -100,7 +100,12 @@ for file in files:
             sent_list2=sent_list2+sent_list1
 
         '''
-        sent_list = nltk.sent_tokenize(full_story)
+        sent_list1 = nltk.sent_tokenize(full_story)
+        sent_list = []
+        for sent1 in sent_list1:
+            sent1 = sent1.replace(sent1[len(sent1)-1],"")
+            sent_list.append(sent1)
+            print(sent_list)
         '''
         sent_list_with_para=[]
          para_list = re.split("[\.|\"|!]\s*\n\n+", full_story)

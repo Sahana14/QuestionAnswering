@@ -73,7 +73,6 @@ def removestopwords_punct(ques):
     return ques
 
 def removepunc(val):
-    val = val.replace(".","")
     val = val.replace("-"," ")
     val = val.replace(",","")
     val = val.replace("(", "")
@@ -106,7 +105,6 @@ def findverbsinques(sent):
 
 def remove_puncts(sen):
     sen = sen.replace(",","")
-    sen = sen.replace(".", "")
     sen = sen.replace("-", " ")
     sen = sen.replace("(", "")
     sen = sen.replace(")", "")

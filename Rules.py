@@ -123,11 +123,11 @@ def containsPOSTag(L,string):
 
 def containsList(L,lt):
     for q in L.split():
-        if not lt == constants.PERSON_NAMES or not lt == constants.TIME:
-            if q.lower() in lt:
+        if lt == constants.PERSON_NAMES or lt == constants.TIME:
+            if q in lt:
                 return True
         else:
-            if q in lt:
+            if q.lower() in lt:
                 return True
     return False
 
