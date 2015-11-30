@@ -100,8 +100,9 @@ def findverbsinques(Whword, sent):
     sent_tag = Postagger(sent)
     sent_tag_nosw = removestopwords_punct(sent_tag)
     for sen in sent_tag_nosw:
-        if sen[1] == "VB" or sen[1] == "VBD" or sen[1] == "VBG" or sen[1] == "VBN":
-            return sen[0]
+        if sen[1] == "VB" or sen[1] == "VBD" or sen[1] == "VBG" or sen[1] == "VBN" or sen[1] == "VBP":
+            verb_list.append(sen[0])
+            break
     return verb_list
 
 def remove_puncts(sen):

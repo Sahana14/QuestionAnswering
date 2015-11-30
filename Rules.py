@@ -33,25 +33,19 @@ def WordMatch(ques, sent):
     score = 0
     ques_tag = PosTag(ques)
     sent_tag = PosTag(sent)
-    for q in ques_tag:
-        if not checkStopWord(q[0]):
-            if q[1] == "VB" or q[1] == "VBD" or q[1] == "VBG" or q[1] == "VBN" or q[1] == "VBP" or q[1] == "VBZ":
-                w = ps.stem(q[0].lower())
-                for s in sent.split():
-                    s_lm = ps.stem(s.lower())
-                    if w == s_lm:
-                        score = score + 6
-                        break
-                    #to match words like win n won
+    for s in sent_tag:
+        if not checkStopWord(s[0]):
+            if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
+                for q in ques_tag:
                     w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
-                    w2 = WordNetLemmatizer().lemmatize(s, 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s[0], 'v')
                     if w1 == w2:
                         score = score + 6
                         break
             else:
-                w = ps.stem(q[0].lower())
-                for s in sent.split():
-                    s_lm = ps.stem(s.lower())
+                w = ps.stem(s[0].lower())
+                for q in ques_tag:
+                    s_lm = ps.stem(q[0].lower())
                     if w == s_lm:
                         score = score + 3
                         break
@@ -74,24 +68,19 @@ def WordMatchHow(ques, sent):
             if se[1] == "PRP":
                 score = score + 3
                 break
-    for q in ques_tag:
-        if not checkStopWord(q[0]):
-            if q[1] == "VB" or q[1] == "VBD" or q[1] == "VBG" or q[1] == "VBN" or q[1] == "VBP" or q[1] == "VBZ":
-                w = ps.stem(q[0].lower())
-                for s in sent.split():
-                    s_lm = ps.stem(s.lower())
-                    if w == s_lm:
-                        score = score + 6
-                        break
+    for s in sent_tag:
+        if not checkStopWord(s[0]):
+            if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
+                for q in ques_tag:
                     w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
-                    w2 = WordNetLemmatizer().lemmatize(s, 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s[0], 'v')
                     if w1 == w2:
                         score = score + 6
                         break
             else:
-                w = ps.stem(q[0].lower())
-                for s in sent_tag:
-                    s_lm = ps.stem(s[0].lower())
+                w = ps.stem(s[0].lower())
+                for q in ques_tag:
+                    s_lm = ps.stem(q[0].lower())
                     if w == s_lm:
                         score = score + 3
                         break
@@ -254,6 +243,6 @@ def whyMainRule(q,sent_list):
 def howRule(q,s):
     score = 0
     score = score + WordMatch(q,s)
-    if containsList(s, constants.Numeric) or containsPOSTag(s,"CD") :
+    if containsList(s, constants.Numeric) or containsPOSTag(s,"CD"):
         score = score + constants.good_clue
     return score

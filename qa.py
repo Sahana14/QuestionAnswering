@@ -103,7 +103,7 @@ for file in files:
         sent_list1 = nltk.sent_tokenize(full_story)
         sent_list = []
         for sent1 in sent_list1:
-            sent1 = sent1.replace(sent1[len(sent1)-1],"")
+            sent1 = sent1[:-1]
             sent_list.append(sent1)
         '''
         sent_list_with_para=[]
@@ -168,10 +168,12 @@ for file in files:
             for s in sent_list:
                 score = Rules.whereRule(q,helper.remove_puncts(s))
                 list1.append((s,score))
+        elif question_type=="hownum":
+            for s in sent_list:
+                score = Rules.howRule(q,s)
+                list1.append((s,score))
         elif question_type=="why":
             list1 = Rules.whyMainRule(q,sent_list)
-        elif question_type=="hownum":
-            list1 = Rules.howRule(q,sent_list)
         else:
             for s in sent_list:
                 s_nopunct = helper.remove_puncts(s)
@@ -258,8 +260,11 @@ for file in files:
         finalsents.write("\n")
         finalsents.write("Question: " + q)
         sorted_top_ans = sorted(top_ans, key=lambda  x: (-x[1]))
-        #if sorted_top_ans[0][1] > 10 and sorted_top_ans[1][1] < 10:
-            #sorted_top_ans =
+        sorted_top_ans1 = copy.deepcopy(sorted_top_ans)
+        if len(sorted_top_ans) > 2:
+            if sorted_top_ans1[0][1] - sorted_top_ans1[1][1] > 10:
+                sorted_top_ans = []
+                sorted_top_ans.append(sorted_top_ans1[0])
         for answ in sorted_top_ans:
             finalsents.write("\n" + answ[0] + "   ")
             finalsents.write(str(answ[1]) + "\n")
@@ -274,7 +279,7 @@ for file in files:
             if question_type == "why":
                 new_ans = FinalizeSent.matchFinalWhy(q,sorted_top_ans)
         else:
-            matched_ans = FinalizeSent.formatFinalSent(Whword, s2, q)
+            new_ans = FinalizeSent.formatFinalSent(Whword, s2, q)
             #new_ans = FinalizeSent.trimFinalAns(matched_ans,s2.split(),1)
         value = ""
         if len(new_ans) > 0:
@@ -291,6 +296,14 @@ for file in files:
             for val in value_str_list:
                 if not helper.remqueswords(q,val):
                     value_str = value_str + str(val) + " "
+            if value_str == "":
+                match_ans = sorted_top_ans[0][0]
+                match_ans1 = match_ans.strip()
+                match_ans2 = match_ans1.replace("\n"," ")
+                for val in match_ans2.split():
+                    if not helper.remqueswords(q,val):
+                        val = helper.removepunc(val)
+                        value_str  = value_str + str(val) + " "
             value = qid_list[z] + "Answer: " + value_str + "\n\n"
         else:
             #s2 = " ".join("".join([" " if ch in string.punctuation else ch for ch in s2]).split())
@@ -299,6 +312,14 @@ for file in files:
                 if not helper.remqueswords(q,val):
                     val = helper.removepunc(val)
                     value_str  = value_str + str(val) + " "
+            if value_str == "":
+                match_ans = sorted_top_ans[0][0]
+                match_ans1 = match_ans.strip()
+                match_ans2 = match_ans1.replace("\n"," ")
+                for val in match_ans2.split():
+                    if not helper.remqueswords(q,val):
+                        val = helper.removepunc(val)
+                        value_str  = value_str + str(val) + " "
             value = qid_list[z] + "Answer: " + value_str + "\n\n"
         #value = " ".join("".join([" " if ch in string.punctuation else ch for ch in value]).split())
         #value = value.translate(None, string.punctuation)
