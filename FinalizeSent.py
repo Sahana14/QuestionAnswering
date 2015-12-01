@@ -58,7 +58,8 @@ def formatFinalSent(Whword, s2, q):
                             person.append(s2_li[b+3])
                     elif word == "said":
                         person.append(s2_li[b-1])
-                        person.append(s2_li[b+1])
+                        if b+1 <= len(s2_li) - 1:
+                            person.append(s2_li[b+1])
                         if b+2 <= len(s2_li) - 1:
                             person.append(s2_li[b+2])
                 if not person == []:
@@ -278,13 +279,7 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
             temp_list = []
             temp_list.append(verb_match_sent[0])
         #case a and case b are same and they are reduntant we will remove one in future
-            #match_ans = findMatchingAns(q,verb_match_sent)
-            for verb_sent_tuple in verb_match_sent:
-                temp_list2=[]
-                temp_list2.append(verb_sent_tuple)
-                match_ans = findMatchingAns(q,temp_list2)  # verb + ner found in a sentence if match_ans not empty
-                if not match_ans == []:
-                    break
+            match_ans = findMatchingAns(q,verb_match_sent)
             un_match_ans=getUnmatchedAns(Wh_word,q,temp_list)
             sent_tag = nltk.pos_tag(nltk.word_tokenize(verb_match_sent[0][0]))
             match_ans = match_ans + helper.findNNP(sent_tag)
@@ -296,13 +291,7 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
                 un_match_ans=getUnmatchedAns(Wh_word,q,temp_list)
                 match_ans=list(set(match_ans) - set(un_match_ans))
         else:
-            #match_ans = findMatchingAns(q,top_ans_list)
-            for verb_sent_tuple in top_ans_list:
-                temp_list2=[]
-                temp_list2.append(verb_sent_tuple)
-                match_ans = findMatchingAns(q,temp_list2)  # verb + ner found in a sentence if match_ans not empty
-                if not match_ans == []:
-                    break
+            match_ans = findMatchingAns(q,top_ans_list)
             temp_list = []
             temp_list.append(top_ans_list[0])
             # ner found in a sentence in the remaining of sentences where verb was not ptresent if match_ans not empty
