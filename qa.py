@@ -239,7 +239,7 @@ for file in files:
             count = count + Keywordcount.countexp(para, complNominal[z])
             count = count + Keywordcount.countexp(para, otherNominal[z])
             count = count + Keywordcount.countexp_na(para, nounAdj[z])
-            count = count + Keywordcount.countexp(para, otherNoun[z])
+            count = count + Keywordcount.countexp_noun(para, otherNoun[z])
             count = count + Keywordcount.countexp_verb(para, verb[z])
             count = count + Keywordcount.countexp(para, adverb[z])
             count_list.append(count)

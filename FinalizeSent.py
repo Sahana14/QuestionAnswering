@@ -11,6 +11,7 @@ import helper
 from nltk.tag.stanford import StanfordNERTagger
 st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
 import constants
+import Rules
 year_list = []
 for i in range(1400,2000):
     year_list.append(str(i))
@@ -206,8 +207,53 @@ def getUnmatchedAns(Wh_word,q,sent):
         un_match_ans = findMatchingAns(q1,sent)
     return un_match_ans
 
+def findLocations(q, top_ans_list):
+    loc_list = []
+    loc_prep = ["in", "at", "around the"]
+    Wh_word = helper.findWH(q)
+    if Wh_word.lower() == "where":
+        for all_ans in top_ans_list:
+            matching_ans = []
+            s2_str = ""
+            for words in all_ans.split():
+                word = helper.removepunc(words)
+                s2_str = s2_str + word + " "
+                ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
+                for tree in ner_tag.subtrees():
+                    if tree.label().lower() == "location" or tree.label().lower() == "gpe":
+                        s = [x[0] for x in tree.leaves()]
+                        matching_ans = matching_ans + s
+            matching_ans = matching_ans + helper.findinList(all_ans, constants.LOCATION)
+            if matching_ans == []:
+                for w,all_wrd in enumerate(all_ans.split()):
+                    all_wrd = helper.removepunc(all_wrd).lower()
+                    if all_wrd == "in" or all_wrd == "at" or all_wrd == "around":
+                        matching_ans = matching_ans + all_ans[w+1]
+                        if w+2 < len(all_ans.split()) - 1:
+                            matching_ans = matching_ans + all_ans[w+2]
+                        if w+3 < len(all_ans.split()) - 1:
+                            matching_ans = matching_ans + all_ans[w+3]
+            else:
+                for each_ans in matching_ans:
+                    dd= [x for x in all_ans.split()].index(each_ans)
+                    i1=dd-5
+                    i2=dd+5
+                    i3=min(i2,len(all_ans.split()))
+                    i4=max(i1,0)
+                    all_tag = nltk.pos_tag(nltk.word_tokenize(all_ans))
+                    for v,(all_wrd1,tag) in enumerate(all_tag): # iterate over tagged sentence
+                        if v > i4 and v < i3:
+                        # check whether the tagged sentence has nnp
+                            if tag == "NNP" or tag == "NNPS":
+                                matching_ans = matching_ans + all_wrd1
+            matching_ans_unique = sorted(set(matching_ans),key=matching_ans.index)
+            loc_list = loc_list + matching_ans_unique
+        loc_list_unique =  sorted(set(loc_list),key=loc_list.index)
+    return loc_list_unique
+
 def matchFinalAnsWhoWhere(q, top_ans_list):
     Wh_word = helper.findWH(q)
+    locations_list = findLocations(q, top_ans_list)
     q_verb_stem = []
     q_verb_list = helper.findverbsinques(Wh_word,q)
     final_ans_list = []
@@ -230,7 +276,13 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
             temp_list = []
             temp_list.append(verb_match_sent[0])
         #case a and case b are same and they are reduntant we will remove one in future
-            match_ans = findMatchingAns(q,verb_match_sent)  # verb + ner found in a sentence if match_ans not empty
+            #match_ans = findMatchingAns(q,verb_match_sent)
+            for verb_sent_tuple in verb_match_sent:
+                temp_list2=[]
+                temp_list2.append(verb_sent_tuple)
+                match_ans = findMatchingAns(q,temp_list2)  # verb + ner found in a sentence if match_ans not empty
+                if not match_ans == []:
+                    break
             un_match_ans=getUnmatchedAns(Wh_word,q,temp_list)
             sent_tag = nltk.pos_tag(nltk.word_tokenize(verb_match_sent[0][0]))
             match_ans = match_ans + helper.findNNP(sent_tag)
@@ -242,7 +294,13 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
                 un_match_ans=getUnmatchedAns(Wh_word,q,temp_list)
                 match_ans=list(set(match_ans) - set(un_match_ans))
         else:
-            match_ans = findMatchingAns(q,top_ans_list)
+            #match_ans = findMatchingAns(q,top_ans_list)
+            for verb_sent_tuple in top_ans_list:
+                temp_list2=[]
+                temp_list2.append(verb_sent_tuple)
+                match_ans = findMatchingAns(q,temp_list2)  # verb + ner found in a sentence if match_ans not empty
+                if not match_ans == []:
+                    break
             temp_list = []
             temp_list.append(top_ans_list[0])
             # ner found in a sentence in the remaining of sentences where verb was not ptresent if match_ans not empty
@@ -296,6 +354,7 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
             match_ans1 = findMatchingAns(q,temp_list)
             sent_tag = nltk.pos_tag(nltk.word_tokenize(ans[0]))
             match_ans = match_ans + match_ans1 + helper.findNNP(sent_tag)'''
+    match_ans = match_ans + locations_list
     return match_ans
 
 def findverbsinsent(sent_tag):
