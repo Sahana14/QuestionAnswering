@@ -170,7 +170,7 @@ for file in files:
                 list1.append((s,score))
         elif question_type=="hownum":
             for s in sent_list:
-                score = Rules.howRule(q,s)
+                score = Rules.howRule(q,helper.remove_puncts(s))
                 list1.append((s,score))
         elif question_type=="why":
             list1 = Rules.whyMainRule(q,sent_list)

@@ -222,21 +222,19 @@ def whyMainRule(q,sent_list):
     best = []
     temp_list = []
     for k,s in enumerate(sent_list):
-        s = helper.remove_puncts(s)
-        score.append(WordMatch(q,s))
+        score.append(WordMatch(q,helper.remove_puncts(s)))
         best.append((s, score[k]))  # best is all the sentences with their scores
     best_list = sorted(best, key=lambda  x: (-x[1],x[0]))
     sent_best = []
     for j in range(10):
         sent_best.append(best_list[j][0])
     for i,s in enumerate(sent_list):
-        s = helper.remove_puncts(s)
         if i == 0:
-            score = whyRule(q,s,sent_best,None,sent_list[i+1])
+            score = whyRule(q,helper.remove_puncts(s),sent_best,None,sent_list[i+1])
         elif  i == len(sent_list) - 1:
-            score = whyRule(q,s,sent_best,sent_list[i-1],None)
+            score = whyRule(q,helper.remove_puncts(s),sent_best,sent_list[i-1],None)
         else:
-            score = whyRule(q,s,sent_best,sent_list[i-1],sent_list[i+1])
+            score = whyRule(q,helper.remove_puncts(s),sent_best,sent_list[i-1],sent_list[i+1])
         temp_list.append((s,score))
     return temp_list
 

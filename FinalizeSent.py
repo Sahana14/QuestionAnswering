@@ -198,7 +198,7 @@ def findMatchingAns(q,sent):
 
 def getUnmatchedAns(Wh_word,q,sent):
     un_match_ans=[]
-    if Wh_word == "who":
+    if Wh_word.lower() == "who":
         q1=q.lower().replace("who","where")
         un_match_ans = findMatchingAns(q1,sent)
     else:
