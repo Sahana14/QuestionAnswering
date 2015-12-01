@@ -33,19 +33,19 @@ def WordMatch(ques, sent):
     score = 0
     ques_tag = PosTag(ques)
     sent_tag = PosTag(sent)
-    for s in sent_tag:
-        if not checkStopWord(s[0]):
-            if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
-                for q in ques_tag:
+    for q in ques_tag:
+        if not checkStopWord(q[0]):
+            if q[1] == "VB" or q[1] == "VBD" or q[1] == "VBG" or q[1] == "VBN" or q[1] == "VBP":
+                for s in sent_tag:
                     w1 = WordNetLemmatizer().lemmatize(q[0].lower(), 'v')
                     w2 = WordNetLemmatizer().lemmatize(s[0].lower(), 'v')
                     if w1 == w2:
                         score = score + 6
                         break
             else:
-                w = ps.stem(s[0].lower())
-                for q in ques_tag:
-                    s_lm = ps.stem(q[0].lower())
+                w = ps.stem(q[0].lower())
+                for s in sent_tag:
+                    s_lm = ps.stem(s[0].lower())
                     if w == s_lm:
                         score = score + 3
                         break
@@ -147,7 +147,7 @@ def whoRule(q,s):
     score = score + WordMatch(q,s)
     if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and (containsNER(s,"PERSON") or containsList(s,constants.OCCUPATION) or containsList(s,constants.PERSON_NAMES) or contains(s,"said")):
         score = score + constants.confident
-    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and (contains(s,"name") or contains(s,"said")):
+    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and contains(s,"name"):
         score = score + constants.good_clue
     if containsPOSTag(s,"NNP") or containsPOSTag(s, "NNPS"):
         score= score + constants.good_clue
