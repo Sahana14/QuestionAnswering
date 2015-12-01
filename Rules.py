@@ -37,8 +37,8 @@ def WordMatch(ques, sent):
         if not checkStopWord(s[0]):
             if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
                 for q in ques_tag:
-                    w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
-                    w2 = WordNetLemmatizer().lemmatize(s[0], 'v')
+                    w1 = WordNetLemmatizer().lemmatize(q[0].lower(), 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s[0].lower(), 'v')
                     if w1 == w2:
                         score = score + 6
                         break
@@ -72,8 +72,8 @@ def WordMatchHow(ques, sent):
         if not checkStopWord(s[0]):
             if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
                 for q in ques_tag:
-                    w1 = WordNetLemmatizer().lemmatize(q[0], 'v')
-                    w2 = WordNetLemmatizer().lemmatize(s[0], 'v')
+                    w1 = WordNetLemmatizer().lemmatize(q[0].lower(), 'v')
+                    w2 = WordNetLemmatizer().lemmatize(s[0].lower(), 'v')
                     if w1 == w2:
                         score = score + 6
                         break
@@ -145,9 +145,9 @@ def containsNPwithPP(s):
 def whoRule(q,s):
     score = 0
     score = score + WordMatch(q,s)
-    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and (containsNER(s,"PERSON") or containsList(s,constants.OCCUPATION) or containsList(s,constants.PERSON_NAMES)):
+    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and (containsNER(s,"PERSON") or containsList(s,constants.OCCUPATION) or containsList(s,constants.PERSON_NAMES) or contains(s,"said")):
         score = score + constants.confident
-    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and contains(s,"name"):
+    if (not containsNER(q,"PERSON") or not containsList(q, constants.OCCUPATION) or not containsList(q, constants.PERSON_NAMES)) and (contains(s,"name") or contains(s,"said")):
         score = score + constants.good_clue
     if containsPOSTag(s,"NNP") or containsPOSTag(s, "NNPS"):
         score= score + constants.good_clue

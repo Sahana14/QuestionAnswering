@@ -34,7 +34,7 @@ def formatFinalSent(Whword, s2, q):
                 loc = helper.findinList(s2, constants.LOCATION)
                 s2_li = s2.split()
                 for b,word in enumerate(s2_li):
-                    if word == "in" or word == "from":
+                    if word == "in" or word == "from" or (word == "around" and s2_li[b+1] == "the"):
                         loc.append(s2_li[b+1])
                         if b+2 <= len(s2_li) - 1:
                             loc.append(s2_li[b+2])
@@ -55,6 +55,11 @@ def formatFinalSent(Whword, s2, q):
                             person.append(s2_li[b+2])
                         if b+3 <= len(s2_li) - 1:
                             person.append(s2_li[b+3])
+                    elif word == "said":
+                        person.append(s2_li[b-1])
+                        person.append(s2_li[b+1])
+                        if b+2 <= len(s2_li) - 1:
+                            person.append(s2_li[b+2])
                 if not person == []:
                     matched_ans = matched_ans + person
         final_ans = matched_ans
@@ -210,12 +215,12 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
     match_ans = []
     if not q_verb_list == []:
         for verb in q_verb_list:
-            q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
+            q_verb = WordNetLemmatizer().lemmatize(verb.lower(), 'v')
             q_verb_stem.append(q_verb)
     for ans in top_ans_list:
         for q_verb in q_verb_stem:
             for word in ans[0].split():
-                w2 = WordNetLemmatizer().lemmatize(word, 'v')
+                w2 = WordNetLemmatizer().lemmatize(word.lower(), 'v')
                 if q_verb == w2 and ans not in verb_match_sent:
                     verb_match_sent.append(ans)
                     break
@@ -259,12 +264,12 @@ def matchFinalAnsWhoWhere(q, top_ans_list):
         q_nn = findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q)))
         flag = 0
         for nn in q_nn:
-            nn = WordNetLemmatizer().lemmatize(nn, 'n')
+            nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
             for top_ans in top_ans_list:
                 sen = top_ans[0]
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(sen))
-                for s_nn in findnounsinsent(sent_tag):
-                    s_n = WordNetLemmatizer().lemmatize(s_nn, 'n')
+                for s_nn in findnounnnpsinsent(sent_tag):
+                    s_n = WordNetLemmatizer().lemmatize(s_nn.lower(), 'n')
                     if s_n.lower() == nn.lower():
                         temp_list = []
                         temp_list.append(top_ans)
@@ -300,6 +305,13 @@ def findverbsinsent(sent_tag):
             temp.append(s[0])
     return temp
 
+def findnounnnpsinsent(sent_tag):
+    temp = []
+    for s in sent_tag:
+        if s[1] == "NN" or s[1] == "NNS" or s[1] == "NNP" or s[1] == "NNPS":
+            temp.append(s[0])
+    return temp
+
 def findnounsinsent(sent_tag):
     temp = []
     for s in sent_tag:
@@ -315,19 +327,15 @@ def matchFinalAnsWhat(q, top_ans_list):
     match_ans = []
     if not q_verb_list == []:
         for verb in q_verb_list:
-            q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
+            q_verb = WordNetLemmatizer().lemmatize(verb.lower(), 'v')
             q_verb_stem.append(q_verb)
-
-
     for ans in top_ans_list:
         for q_verb in q_verb_stem:
             for word in ans[0].split():
-                w2 = WordNetLemmatizer().lemmatize(word, 'v')
+                w2 = WordNetLemmatizer().lemmatize(word.lower(), 'v')
                 if q_verb == w2 and ans not in verb_match_sent:
                     verb_match_sent.append(ans)
                     break
-
-
     if not q_verb_list == []:
         if not verb_match_sent == []:
         #case a
@@ -336,16 +344,16 @@ def matchFinalAnsWhat(q, top_ans_list):
                 #case b
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(verb_match_sent[0][0]))
                 for vb in q_verb_stem:
-                    for s_vb in findverbsinsent(sent_tag):
-                        s_vb = WordNetLemmatizer().lemmatize(s_vb, 'v')
-                        if vb == s_vb:
-                            match_ans.append(vb)
+                    for s_vb in sent_tag:
+                        s_vb1 = WordNetLemmatizer().lemmatize(s_vb[0].lower(), 'v')
+                        if vb == s_vb1:
+                            match_ans.append(s_vb[0])
                 for nn in findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q))):
-                    nn = WordNetLemmatizer().lemmatize(nn, 'n')
-                    for s_nn in findnounsinsent(sent_tag):
-                        s_nn = WordNetLemmatizer().lemmatize(s_nn, 'n')
-                        if s_nn.lower() == nn.lower():
-                            match_ans.append(s_nn)
+                    nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
+                    for s_nn in sent_tag:
+                        s_nn1 = WordNetLemmatizer().lemmatize(s_nn[0].lower(), 'n')
+                        if s_nn1.lower() == nn.lower():
+                            match_ans.append(s_nn[0])
                 match_ans = trimFinalAnsWhat(match_ans, verb_match_sent[0][0])
         else:
             match_ans = findMatchingAns(q,top_ans_list)
@@ -357,14 +365,14 @@ def matchFinalAnsWhat(q, top_ans_list):
                 q_nn = findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q)))
                 flag = 0
                 for nn in q_nn:
-                    nn = WordNetLemmatizer().lemmatize(nn, 'n')
+                    nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
                     for top_ans in top_ans_list:
                         sen = top_ans[0]
                         sent_tag = nltk.pos_tag(nltk.word_tokenize(sen))
-                        for s_nn in findnounsinsent(sent_tag):
-                            s_n = WordNetLemmatizer().lemmatize(s_nn, 'n')
+                        for s_nn in sent_tag:
+                            s_n = WordNetLemmatizer().lemmatize(s_nn[0].lower(), 'n')
                             if s_n.lower() == nn.lower() and flag == 0:
-                                matched_ans.append(s_nn)
+                                matched_ans.append(s_nn[0])
                                 flag = 1
                                 break
                         if flag == 1:
@@ -379,14 +387,14 @@ def matchFinalAnsWhat(q, top_ans_list):
                 q_nn = findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q)))
                 flag = 0
                 for nn in q_nn:
-                    nn = WordNetLemmatizer().lemmatize(nn, 'n')
+                    nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
                     for top_ans in top_ans_list:
                         sen = top_ans[0]
                         sent_tag = nltk.pos_tag(nltk.word_tokenize(sen))
-                        for s_nn in findnounsinsent(sent_tag):
-                            s_n = WordNetLemmatizer().lemmatize(s_nn, 'n')
+                        for s_nn in sent_tag:
+                            s_n = WordNetLemmatizer().lemmatize(s_nn[0].lower(), 'n')
                             if s_n.lower() == nn.lower() and flag == 0:
-                                matched_ans.append(s_nn)
+                                matched_ans.append(s_nn[0])
                                 flag = 1
                                 break
                         if flag == 1:
@@ -400,14 +408,14 @@ def matchFinalAnsWhat(q, top_ans_list):
         q_nn = findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q)))
         flag = 0
         for nn in q_nn:
-            nn = WordNetLemmatizer().lemmatize(nn, 'n')
+            nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
             for top_ans in top_ans_list:
                 sen = top_ans[0]
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(sen))
-                for s_nn in findnounsinsent(sent_tag):
-                    s_n = WordNetLemmatizer().lemmatize(s_nn, 'n')
+                for s_nn in sent_tag:
+                    s_n = WordNetLemmatizer().lemmatize(s_nn[0].lower(), 'n')
                     if s_n.lower() == nn.lower() and flag == 0:
-                        matched_ans.append(s_nn)
+                        matched_ans.append(s_nn[0])
                         flag = 1
                         break
                 if flag == 1:
@@ -425,13 +433,13 @@ def matchFinalAnsWhenHow(q, top_ans_list):
     match_ans = []
     if not q_verb_list == []:
         for verb in q_verb_list:
-            q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
+            q_verb = WordNetLemmatizer().lemmatize(verb.lower(), 'v')
             q_verb_stem.append(q_verb)
 
     for ans in top_ans_list:
         for q_verb in q_verb_stem:
             for word in ans[0].split():
-                w2 = WordNetLemmatizer().lemmatize(word, 'v')
+                w2 = WordNetLemmatizer().lemmatize(word.lower(), 'v')
                 if q_verb == w2 and ans not in verb_match_sent:
                     verb_match_sent.append(ans)
                     break
@@ -451,12 +459,12 @@ def matchFinalAnsWhenHow(q, top_ans_list):
         q_nn = findnounsinsent(nltk.pos_tag(nltk.word_tokenize(q)))
         flag = 0
         for nn in q_nn:
-            nn = WordNetLemmatizer().lemmatize(nn, 'n')
+            nn = WordNetLemmatizer().lemmatize(nn.lower(), 'n')
             for top_ans in top_ans_list:
                 sen = top_ans[0]
                 sent_tag = nltk.pos_tag(nltk.word_tokenize(sen))
-                for s_nn in findnounsinsent(sent_tag):
-                    s_n = WordNetLemmatizer().lemmatize(s_nn, 'n')
+                for s_nn in findnounnnpsinsent(sent_tag):
+                    s_n = WordNetLemmatizer().lemmatize(s_nn.lower(), 'n')
                     if s_n.lower() == nn.lower():
                         temp_list = []
                         temp_list.append(top_ans)
@@ -483,12 +491,12 @@ def matchFinalWhy(q, top_ans_list):
     match_ans = []
     if not q_verb_list == None:
         for verb in q_verb_list:
-            q_verb = WordNetLemmatizer().lemmatize(verb, 'v')
+            q_verb = WordNetLemmatizer().lemmatize(verb.lower(), 'v')
             q_verb_stem.append(q_verb)
     for ans in top_ans_list:
         for q_verb in q_verb_stem:
             for word in ans[0].split():
-                w2 = WordNetLemmatizer().lemmatize(word, 'v')
+                w2 = WordNetLemmatizer().lemmatize(word.lower(), 'v')
                 if q_verb == w2 and ans not in verb_match_sent:
                     verb_match_sent.append(ans)
                     break

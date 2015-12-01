@@ -16,7 +16,7 @@ TIME = ["nowadays", "these days","lately","recently","last night","last week","l
         "Wednesday","Thursday","Friday","Saturday","Sunday","pm","p.m.","am","a.m.","p.m", "a.m","o'clock","o clock"]
 
 TIME1 = ["last night","last week","last month","last year","in a week","in 3 days","next week","next month","next year","next summer","on time","by friday","by next week",
-        "by the 7th of","Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","January", "February", "March", "April", "May", "June","July", "August","September", "October", "November", "December","pm","p.m","am","a.m","o'clock","o clock","years","year"]
+        "by the 7th of","Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","January", "February", "March", "April", "May", "June","July", "August","September", "October", "November", "December","pm","p.m","am","a.m","a.m.","p.m.","o'clock","o clock","years","year"]
 
 LOCATION = ["Afghanistan","Albania","Algeria","American Samoa","Andorra","Angola","Anguilla","Antarctica","Antigua and Barbuda","Argentina",
 "Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin",

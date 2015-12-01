@@ -64,10 +64,10 @@ def countexp(para, searchText):
 
 def countexp_verb(para, searchText):
     cnt = 0
-    searchWords = [WordNetLemmatizer().lemmatize(s, 'v') for s in searchText]
+    searchWords = [WordNetLemmatizer().lemmatize(s.lower(), 'v') for s in searchText]
     for stxt in searchWords:
         for word in para.split():
-            w1 = WordNetLemmatizer().lemmatize(word, 'v')
+            w1 = WordNetLemmatizer().lemmatize(word.lower(), 'v')
             if stxt.lower() == w1.lower():
                 cnt = cnt + 1
                 break
