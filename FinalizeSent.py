@@ -215,7 +215,7 @@ def findLocations(q, top_ans_list):
         for all_ans in top_ans_list:
             matching_ans = []
             s2_str = ""
-            for words in all_ans.split():
+            for words in all_ans[0].split():
                 word = helper.removepunc(words)
                 s2_str = s2_str + word + " "
                 ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
@@ -223,29 +223,29 @@ def findLocations(q, top_ans_list):
                     if tree.label().lower() == "location" or tree.label().lower() == "gpe":
                         s = [x[0] for x in tree.leaves()]
                         matching_ans = matching_ans + s
-            matching_ans = matching_ans + helper.findinList(all_ans, constants.LOCATION)
+            matching_ans = matching_ans + helper.findinList(all_ans[0], constants.LOCATION)
             if matching_ans == []:
-                for w,all_wrd in enumerate(all_ans.split()):
+                for w,all_wrd in enumerate(all_ans[0].split()):
                     all_wrd = helper.removepunc(all_wrd).lower()
                     if all_wrd == "in" or all_wrd == "at" or all_wrd == "around":
                         matching_ans = matching_ans + all_ans[w+1]
-                        if w+2 < len(all_ans.split()) - 1:
+                        if w+2 < len(all_ans[0].split()) - 1:
                             matching_ans = matching_ans + all_ans[w+2]
-                        if w+3 < len(all_ans.split()) - 1:
+                        if w+3 < len(all_ans[0].split()) - 1:
                             matching_ans = matching_ans + all_ans[w+3]
             else:
                 for each_ans in matching_ans:
-                    dd= [x for x in all_ans.split()].index(each_ans)
+                    dd= [x for x in all_ans[0].split()].index(each_ans)
                     i1=dd-5
                     i2=dd+5
-                    i3=min(i2,len(all_ans.split()))
+                    i3=min(i2,len(all_ans[0].split()))
                     i4=max(i1,0)
-                    all_tag = nltk.pos_tag(nltk.word_tokenize(all_ans))
+                    all_tag = nltk.pos_tag(nltk.word_tokenize(all_ans[0]))
                     for v,(all_wrd1,tag) in enumerate(all_tag): # iterate over tagged sentence
                         if v > i4 and v < i3:
                         # check whether the tagged sentence has nnp
                             if tag == "NNP" or tag == "NNPS":
-                                matching_ans = matching_ans + all_wrd1
+                                matching_ans.append(all_wrd1)
             matching_ans_unique = sorted(set(matching_ans),key=matching_ans.index)
             loc_list = loc_list + matching_ans_unique
         loc_list_unique =  sorted(set(loc_list),key=loc_list.index)
@@ -253,7 +253,9 @@ def findLocations(q, top_ans_list):
 
 def matchFinalAnsWhoWhere(q, top_ans_list):
     Wh_word = helper.findWH(q)
-    locations_list = findLocations(q, top_ans_list)
+    locations_list = []
+    if Wh_word.lower == "where":
+        locations_list = findLocations(q, top_ans_list)
     q_verb_stem = []
     q_verb_list = helper.findverbsinques(Wh_word,q)
     final_ans_list = []
