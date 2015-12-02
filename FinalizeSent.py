@@ -260,7 +260,7 @@ def findLocations(q, top_ans_list):
 def matchFinalAnsWhoWhere(q, top_ans_list):
     Wh_word = helper.findWH(q)
     locations_list = []
-    if Wh_word.lower == "where":
+    if Wh_word.lower() == "where":
         locations_list = findLocations(q, top_ans_list)
     q_verb_stem = []
     q_verb_list = helper.findverbsinques(Wh_word,q)
