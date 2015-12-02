@@ -224,24 +224,16 @@ def findLocations(q, top_ans_list):
             for words in all_ans[0].split():
                 word = helper.removepunc(words)
                 s2_str = s2_str + word + " "
-                ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
-                for tree in ner_tag.subtrees():
-                    if tree.label().lower() == "location" or tree.label().lower() == "gpe":
-                        s = [x[0] for x in tree.leaves()]
-                        matching_ans = matching_ans + s
+            ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
+            for tree in ner_tag.subtrees():
+                if tree.label().lower() == "location" or tree.label().lower() == "gpe":
+                    s = [x[0] for x in tree.leaves()]
+                    matching_ans = matching_ans + s
             matching_ans = matching_ans + helper.findinList(all_ans[0], constants.LOCATION)
-            if matching_ans == []:
-                for w,all_wrd in enumerate(all_ans[0].split()):
-                    all_wrd = helper.removepunc(all_wrd).lower()
-                    if all_wrd == "in" or all_wrd == "at" or all_wrd == "around":
-                        matching_ans = matching_ans + all_ans[w+1]
-                        if w+2 < len(all_ans[0].split()) - 1:
-                            matching_ans = matching_ans + all_ans[w+2]
-                        if w+3 < len(all_ans[0].split()) - 1:
-                            matching_ans = matching_ans + all_ans[w+3]
-            else:
-                for each_ans in matching_ans:
-                    dd= [x for x in all_ans[0].split()].index(each_ans)
+            if not matching_ans == []:
+                matching_ans1 = copy.deepcopy(matching_ans)
+                for each_ans in matching_ans1:
+                    dd= [x for x in helper.remove_puncts(all_ans[0]).split()].index(each_ans)
                     i1=dd-5
                     i2=dd+5
                     i3=min(i2,len(all_ans[0].split()))
@@ -252,8 +244,18 @@ def findLocations(q, top_ans_list):
                         # check whether the tagged sentence has nnp
                             if tag == "NNP" or tag == "NNPS":
                                 matching_ans.append(all_wrd1)
-            matching_ans_unique = sorted(set(matching_ans),key=matching_ans.index)
-            loc_list = loc_list + matching_ans_unique
+        if matching_ans == []:
+            for all_ans in top_ans_list:
+                for w,all_wrd in enumerate(all_ans[0].split()):
+                    all_wrd = helper.removepunc(all_wrd).lower()
+                    if all_wrd == "in" or all_wrd == "at" or all_wrd == "around":
+                        matching_ans.append(all_ans[0].split()[w+1])
+                        if w+2 < len(all_ans[0].split()) - 1:
+                            matching_ans.append(all_ans[0].split()[w+2])
+                        if w+3 < len(all_ans[0].split()) - 1:
+                            matching_ans.append(all_ans[0].split()[w+3])
+        matching_ans_unique = sorted(set(matching_ans),key=matching_ans.index)
+        loc_list = loc_list + matching_ans_unique
         loc_list_unique =  sorted(set(loc_list),key=loc_list.index)
     return loc_list_unique
 
