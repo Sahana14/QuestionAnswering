@@ -35,16 +35,15 @@ def WordMatch(ques, sent):
     sent_tag = PosTag(sent)
     for q in ques_tag:
         if not checkStopWord(q[0]):
-            if q[1] == "VB" or q[1] == "VBD" or q[1] == "VBG" or q[1] == "VBN" or q[1] == "VBP":
-                for s in sent_tag:
+            for s in sent_tag:
+                if s[1] == "VB" or s[1] == "VBD" or s[1] == "VBG" or s[1] == "VBN" or s[1] == "VBP":
                     w1 = WordNetLemmatizer().lemmatize(q[0].lower(), 'v')
                     w2 = WordNetLemmatizer().lemmatize(s[0].lower(), 'v')
                     if w1 == w2:
                         score = score + 6
                         break
-            else:
-                w = ps.stem(q[0].lower())
-                for s in sent_tag:
+                else:
+                    w = ps.stem(q[0].lower())
                     s_lm = ps.stem(s[0].lower())
                     if w == s_lm:
                         score = score + 3

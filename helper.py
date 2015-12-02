@@ -37,6 +37,7 @@ def findWH(sent):
     for word in reversed(sent.split()):
         if constants.ques_words.__contains__(word.lower()):
             return word
+    return ""
 
 def Postagger(sent):
     sent_tag = nltk.pos_tag(nltk.word_tokenize(sent))

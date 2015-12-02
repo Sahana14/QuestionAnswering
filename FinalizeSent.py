@@ -69,11 +69,16 @@ def formatFinalSent(Whword, s2, q):
     if Whword.lower() == "when":
         s2_nopunct = helper.remove_puncts(s2)
         s2_list1 = s2_nopunct.split()
-        ner_tag = st.tag(s2_list1)
-        matched_ans = []
-        for tree in ner_tag:
-            if tree[1].lower() == "date" or tree[1].lower() == "time":
-                matched_ans.append(tree[0])
+        s2_str = ""
+        for words in s2.split():
+            word = helper.removepunc(words)
+            s2_str = s2_str + word + " "
+            ner_tag = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
+            ner_tag_temp = nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(s2_str)))
+            matched_ans = []
+            for tree in ner_tag.subtrees():
+                if tree.label().lower() == "date" or tree.label().lower() == "time":
+                    matched_ans.append(tree.leaves[0][0])
         if matched_ans == []:
             for word in s2_list1:
                 if word in constants.TIME1 or word in year_list:

@@ -13,14 +13,15 @@ import helper
 import FinalizeSent
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import wordnet
-#nltk.data.path.append("/home/sandeep/nltk_data")
+nltk.data.path.append("/home/sandeep/nltk_data")
 from nltk.corpus import state_union
-java_path = "C:/Program Files/Java/jdk1.8.0_20/bin/java.exe"
-os.environ['JAVAHOME'] = java_path
-nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
+#java_path = "C:/Program Files/Java/jdk1.8.0_20/bin/java.exe"
+#os.environ['JAVAHOME'] = java_path
+#nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_60/bin/java.exe")
 from nltk.corpus import stopwords
 from nltk.tag.stanford import StanfordNERTagger
-st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
+st = StanfordNERTagger('english.muc.7class.distsim.crf.ser.gz')
+#st = StanfordNERTagger("stanford-ner-2015-04-20/classifiers/english.muc.7class.distsim.crf.ser.gz", "stanford-ner-2015-04-20/stanford-ner.jar")
 from nltk.stem import PorterStemmer
 ps = PorterStemmer()
 lemmatizer = nltk.WordNetLemmatizer()
@@ -272,8 +273,8 @@ for file in files:
         if not top_ans == []:
             if question_type == "who" or question_type == "where":
                 new_ans = FinalizeSent.matchFinalAnsWhoWhere(q,sorted_top_ans)
-            if question_type == "what":
-                new_ans = FinalizeSent.matchFinalAnsWhat(q,sorted_top_ans)
+            #if question_type == "what":
+                #new_ans = FinalizeSent.matchFinalAnsWhat(q,sorted_top_ans)
             if question_type == "when" or question_type == "hownum":
                 new_ans = FinalizeSent.matchFinalAnsWhenHow(q,sorted_top_ans)
             if question_type == "why":
