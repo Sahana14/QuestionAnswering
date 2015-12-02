@@ -8,8 +8,8 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import stopwords
 lemmatizer = nltk.WordNetLemmatizer()
 STOPWORDS = [lemmatizer.lemmatize(t) for t in stopwords.words('english')]
-from nltk.tag.stanford import StanfordNERTagger
-st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
+#from nltk.tag.stanford import StanfordNERTagger
+#st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
 year_list = []
 for i in range(1400,2000):
     year_list.append(str(i))

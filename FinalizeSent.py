@@ -8,8 +8,8 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.corpus import stopwords
 lemmatizer = nltk.WordNetLemmatizer()
 import helper
-from nltk.tag.stanford import StanfordNERTagger
-st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
+#from nltk.tag.stanford import StanfordNERTagger
+#st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
 import constants
 import Rules
 year_list = []
